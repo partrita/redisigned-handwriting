@@ -471,3 +471,4 @@ $RECYCLE.BIN/
 # Test generated files
 test_*.pdf
 *.pdf
+.vscode
