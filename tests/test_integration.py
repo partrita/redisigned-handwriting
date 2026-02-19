@@ -234,14 +234,16 @@ class TestIntegrationWorkflow:
         )
         assert response.status_code == 400
 
-        # Test missing required fields
+        # Test missing required fields (empty text)
         response = client.post(
-            "/api/process-text", data=json.dumps({}), content_type="application/json"
+            "/api/process-text",
+            data=json.dumps({"text": "", "options": {}}),
+            content_type="application/json",
         )
         assert response.status_code == 400
 
-        # Test text too long
-        long_text = "a" * 2000  # Exceeds test limit of 1000
+        # Test text too long (validator MAX_TEXT_LENGTH is 10000)
+        long_text = "a" * 11000  # Exceeds validator limit of 10000
         response = client.post(
             "/api/process-text",
             data=json.dumps({"text": long_text, "options": {}}),
@@ -396,7 +398,7 @@ class TestIntegrationWorkflow:
                 "handwriting_transcription.pdf_generator.BytesIO"
             ) as mock_bytesio:
                 mock_buffer = Mock()
-                mock_buffer.getvalue.return_value = b"%PDF-1.4\ncomprehensive pdf"
+                mock_buffer.getvalue.return_value = b"%PDF-1.4\n" + b"x" * 200
                 mock_bytesio.return_value = mock_buffer
 
                 response = client.post(

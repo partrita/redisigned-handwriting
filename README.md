@@ -144,6 +144,67 @@ static/               # 정적 자산 (CSS, JS, 이미지)
 
 이 프로젝트는 MIT 라이선스 하에 라이선스가 부여됩니다 - 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
 
+## 배포
+
+### fly.io 배포
+
+이 프로젝트는 [fly.io](https://fly.io)에 배포할 수 있습니다.
+
+#### 사전 요구사항
+
+1. [flyctl](https://fly.io/docs/hands-on/install-flyctl/) 설치
+2. fly.io 계정 생성 및 로그인:
+```bash
+flyctl auth login
+```
+
+#### 첫 번째 배포 (수동)
+
+```bash
+# fly.io 앱 생성 (fly.toml 이름과 동일하게)
+flyctl apps create redisigned-handwriting
+
+# 배포
+flyctl deploy
+```
+
+#### GitHub Actions를 통한 자동 배포 (CI/CD)
+
+`main` 또는 `master` 브랜치에 푸시하면 자동으로 테스트를 실행하고 fly.io에 배포합니다.
+
+**설정 방법:**
+
+1. fly.io API 토큰 발급:
+```bash
+flyctl auth token
+```
+
+2. GitHub 저장소의 **Settings → Secrets and variables → Actions**에서 다음 시크릿 추가:
+   - `FLY_API_TOKEN`: fly.io API 토큰
+
+3. `main` 브랜치에 푸시하면 자동으로 배포됩니다.
+
+#### 환경 변수
+
+fly.io에 환경 변수를 설정하려면:
+```bash
+# SECRET_KEY 설정 (필수!)
+flyctl secrets set SECRET_KEY="your-secure-secret-key"
+```
+
+#### 수동 배포
+
+```bash
+flyctl deploy --remote-only
+```
+
+#### 앱 상태 확인
+
+```bash
+flyctl status
+flyctl logs
+```
+
 ## 지원
 
 문제가 발생하거나 질문이 있는 경우:
@@ -157,3 +218,5 @@ static/               # 정적 자산 (CSS, JS, 이미지)
 - [Flask](https://flask.palletsprojects.com/)로 구축
 - [ReportLab](https://www.reportlab.com/)으로 PDF 생성
 - [FontTools](https://github.com/fonttools/fonttools)를 사용한 폰트 처리
+- [Gunicorn](https://gunicorn.org/)을 사용한 WSGI 서버
+- [fly.io](https://fly.io)에 호스팅

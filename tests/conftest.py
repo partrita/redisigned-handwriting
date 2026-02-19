@@ -15,6 +15,21 @@ from handwriting_transcription.app import create_app
 from handwriting_transcription.font_manager import FontManager
 from handwriting_transcription.pdf_generator import PDFGenerator
 from handwriting_transcription.text_processor import TextProcessor
+from handwriting_transcription.rate_limiter import pdf_rate_limiter
+
+
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiter():
+    """Reset rate limiter state before each test to prevent 429 errors."""
+    pdf_rate_limiter.pdf_limiter.clear_all()
+    pdf_rate_limiter.preview_limiter.clear_all()
+    pdf_rate_limiter.api_limiter.clear_all()
+    yield
+    pdf_rate_limiter.pdf_limiter.clear_all()
+    pdf_rate_limiter.preview_limiter.clear_all()
+    pdf_rate_limiter.api_limiter.clear_all()
 
 
 @pytest.fixture
