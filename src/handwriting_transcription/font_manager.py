@@ -51,6 +51,9 @@ class FontManager:
                 if os.path.exists(font_dir):
                     self._scan_font_directory(font_dir)
 
+            # Scan custom fonts directory
+            self._scan_custom_fonts()
+
             # Add default ReportLab fonts
             self._add_default_fonts()
 
@@ -58,6 +61,23 @@ class FontManager:
             logger.warning(f"Error initializing system fonts: {e}")
             # Fall back to default fonts only
             self._add_default_fonts()
+
+    def _scan_custom_fonts(self):
+        """Scan custom fonts directory and register them."""
+        try:
+            # Locate static/fonts/custom relative to this file
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            custom_font_dir = os.path.join(base_dir, "static", "fonts", "custom")
+            
+            if os.path.exists(custom_font_dir):
+                logger.info(f"Scanning custom fonts directory: {custom_font_dir}")
+                for filename in os.listdir(custom_font_dir):
+                    if filename.lower().endswith(('.ttf', '.otf')):
+                        font_path = os.path.join(custom_font_dir, filename)
+                        # Use register_custom_font to handle registration logic consistently
+                        self.register_custom_font(font_path)
+        except Exception as e:
+            logger.warning(f"Error scanning custom fonts: {e}")
 
     def _get_system_font_directories(self) -> List[str]:
         """Get system-specific font directories."""
@@ -188,7 +208,9 @@ class FontManager:
                         return rl_font_name
 
                     except Exception as e:
-                        logger.warning(f"Failed to register font {font_name}: {e}")
+                        logger.error(f"Failed to register font {font_name} from {font_info.file_path}: {e}")
+                        import traceback
+                        logger.error(traceback.format_exc())
                         # Fall back to default font
                         return self._get_fallback_font()
                 else:

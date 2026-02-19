@@ -534,7 +534,7 @@ class FontValidator:
                         "font_name": font_name,
                     }
                 )
-            elif loaded_font != font_name:
+            elif loaded_font != font_name and loaded_font == "Helvetica" and font_name != "Helvetica":
                 # Font was substituted with fallback
                 warnings.append(
                     {
