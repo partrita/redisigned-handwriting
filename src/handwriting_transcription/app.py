@@ -20,14 +20,12 @@ from .error_handlers import (
     handle_application_errors,
     FontError,
     PDFGenerationError,
-    PreviewGenerationError,
     ContentTooLargeError,
     with_validation_error_handling,
     with_font_error_handling,
     with_pdf_error_handling,
-    with_preview_error_handling,
 )
-from .rate_limiter import pdf_rate_limit, preview_rate_limit, api_rate_limit
+from .rate_limiter import pdf_rate_limit, api_rate_limit
 
 logger = logging.getLogger(__name__)
 
@@ -324,6 +322,62 @@ def create_app(config_name=None):
             logger.error(f"Font preview generation failed: {e}")
             raise FontError(f"Preview generation failed: {str(e)}", font_name=font_name)
 
+    @app.route("/api/fonts/preview-image", methods=["GET"])
+    def get_font_preview_image():
+        """API endpoint to generate a PNG image preview of a font.
+
+        Uses GET with query parameters for easy use in <img> tags.
+        """
+        font_name = request.args.get("font_name", "")
+        preview_text = request.args.get(
+            "preview_text", "The quick brown fox jumps over the lazy dog"
+        )
+        font_size = request.args.get("font_size", 28, type=int)
+
+        if not font_name:
+            return jsonify(create_error_response(
+                type("ValidationResult", (), {
+                    "is_valid": False,
+                    "errors": [{
+                        "message": "Font name is required",
+                        "field": "font_name",
+                        "code": "REQUIRED_FIELD"
+                    }],
+                    "warnings": [],
+                    "sanitized_data": {},
+                })()
+            )), 400
+
+        # Clamp font size
+        font_size = max(12, min(72, font_size))
+
+        try:
+            preview_data = font_manager.generate_font_preview_image(
+                font_name, preview_text, font_size
+            )
+
+            if not preview_data:
+                return jsonify({
+                    "success": False,
+                    "error": f"Failed to generate preview for font {font_name}"
+                }), 500
+
+            return jsonify({
+                "success": True,
+                "data": {
+                    "font_name": font_name,
+                    "preview_image": preview_data,
+                    "preview_text": preview_text,
+                }
+            })
+
+        except Exception as e:
+            logger.error(f"Font preview image generation failed: {e}")
+            return jsonify({
+                "success": False,
+                "error": f"Preview generation failed: {str(e)}"
+            }), 500
+
     @app.route("/api/fonts/metrics", methods=["POST"])
     @with_font_error_handling
     def get_font_metrics():
@@ -379,78 +433,6 @@ def create_app(config_name=None):
             raise FontError(
                 f"Metrics calculation failed: {str(e)}", font_name=sanitized_font_name
             )
-
-    @app.route("/api/preview", methods=["POST"])
-    @preview_rate_limit
-    @with_preview_error_handling
-    def generate_preview():
-        """API endpoint for real-time preview generation with comprehensive validation."""
-        data = request.get_json()
-        if not data:
-            raise ValidationError("Request data is required")
-
-        # Extract and validate request data
-        text = data.get("text", "")
-        options = data.get("options", {})
-
-        # Comprehensive validation of the entire request
-        validation_result = InputValidator.validate_pdf_generation_request(
-            {"text": text, "options": options}
-        )
-
-        if not validation_result.is_valid:
-            return create_error_response(validation_result)
-
-        # Use sanitized data
-        sanitized_text = validation_result.sanitized_data["text"]
-        sanitized_options = validation_result.sanitized_data["options"]
-
-        # Additional font availability check if font is specified
-        if "font_name" in sanitized_options:
-            font_availability = FontValidator.validate_font_availability(
-                sanitized_options["font_name"], font_manager
-            )
-            if not font_availability.is_valid:
-                # Use fallback font instead of failing
-                sanitized_options["font_name"] = "Helvetica"
-                validation_result.warnings.extend(font_availability.errors)
-                logger.warning(
-                    f"Font validation failed, using fallback: {font_availability.errors}"
-                )
-
-        try:
-            from .preview_generator import PreviewGenerator
-
-            # Create preview generator
-            preview_generator = PreviewGenerator()
-
-            # Generate HTML preview
-            preview_html = preview_generator.generate_html_preview(
-                sanitized_text, sanitized_options
-            )
-
-            if not preview_html:
-                raise PreviewGenerationError("Preview generation returned empty result")
-
-            # Calculate dimensions for responsive updates
-            dimensions = preview_generator.calculate_preview_dimensions(
-                sanitized_options
-            )
-
-            response_data = {
-                "preview_html": preview_html,
-                "dimensions": dimensions,
-                "text_length": len(sanitized_text),
-                "options_applied": sanitized_options,
-            }
-
-            return jsonify(
-                create_success_response(response_data, validation_result.warnings)
-            )
-
-        except Exception as e:
-            logger.error(f"Preview generation failed: {e}")
-            raise PreviewGenerationError(f"Preview generation failed: {str(e)}")
 
     @app.route("/api/generate-pdf", methods=["POST"])
     @pdf_rate_limit

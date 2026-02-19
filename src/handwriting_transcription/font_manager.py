@@ -302,6 +302,103 @@ class FontManager:
             logger.error(f"Error generating font preview for {font_name}: {e}")
             return ""
 
+    def generate_font_preview_image(self, font_name: str, preview_text: str = None, font_size: int = 28) -> str:
+        """Generate a base64-encoded PNG image preview of the font.
+
+        Uses Pillow to render text with the actual font file for web display.
+
+        Args:
+            font_name: Name of the font to preview
+            preview_text: Text to render (default: sample text)
+            font_size: Font size for rendering (default: 28)
+
+        Returns:
+            Base64-encoded PNG data URI string, or empty string on failure
+        """
+        try:
+            from PIL import Image, ImageDraw, ImageFont
+
+            if preview_text is None:
+                preview_text = "The quick brown fox jumps over the lazy dog"
+
+            preview_text = preview_text[:60]  # Limit text length
+
+            # Create cache key including font size
+            cache_key = self._create_cache_key(
+                f"img_{font_name}_{font_size}", preview_text
+            )
+
+            # Check cache first
+            cached_result = self._get_cached_result(self._preview_cache, cache_key)
+            if cached_result is not None:
+                return cached_result
+
+            # Try to load the actual TTF font file for Pillow rendering
+            pil_font = None
+            font_path = self._font_paths.get(font_name)
+
+            if font_path and os.path.exists(font_path):
+                try:
+                    pil_font = ImageFont.truetype(font_path, font_size)
+                except Exception as e:
+                    logger.warning(f"Could not load TTF font {font_name} for preview: {e}")
+
+            # Fallback: try common system font paths
+            if pil_font is None:
+                fallback_paths = [
+                    f"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                    f"/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+                    f"/usr/share/fonts/TTF/DejaVuSans.ttf",
+                ]
+                for path in fallback_paths:
+                    if os.path.exists(path):
+                        try:
+                            pil_font = ImageFont.truetype(path, font_size)
+                            break
+                        except Exception:
+                            continue
+
+            # Last resort: use default PIL font
+            if pil_font is None:
+                pil_font = ImageFont.load_default()
+
+            # Calculate text dimensions
+            dummy_img = Image.new("RGBA", (1, 1), (0, 0, 0, 0))
+            dummy_draw = ImageDraw.Draw(dummy_img)
+            bbox = dummy_draw.textbbox((0, 0), preview_text, font=pil_font)
+            text_width = bbox[2] - bbox[0] + 20  # Add padding
+            text_height = bbox[3] - bbox[1] + 20
+
+            # Create image with transparent background
+            img_width = max(text_width, 400)
+            img_height = max(text_height, 50)
+            img = Image.new("RGBA", (img_width, img_height), (255, 255, 255, 0))
+            draw = ImageDraw.Draw(img)
+
+            # Draw text
+            y_offset = (img_height - (bbox[3] - bbox[1])) // 2 - bbox[1]
+            draw.text((10, y_offset), preview_text, font=pil_font, fill=(51, 51, 51, 255))
+
+            # Convert to base64 PNG
+            buffer = BytesIO()
+            img.save(buffer, format="PNG", optimize=True)
+            buffer.seek(0)
+            base64_data = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+            result = f"data:image/png;base64,{base64_data}"
+
+            # Cache the result
+            self._cache_result(self._preview_cache, cache_key, result)
+
+            return result
+
+        except ImportError:
+            logger.error("Pillow is not installed. Cannot generate image preview.")
+            return ""
+        except Exception as e:
+            logger.error(f"Error generating font preview image for {font_name}: {e}")
+            return ""
+
     def get_font_info(self, font_name: str) -> Optional[FontInfo]:
         """Get detailed information about a specific font."""
         return self._system_fonts.get(font_name)

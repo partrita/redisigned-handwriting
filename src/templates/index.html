@@ -9,14 +9,8 @@
         <!-- Text Input Section -->
         <div class="input-section">
             <label for="text-content" class="form-label">Enter your text content:</label>
-            <textarea 
-                id="text-content" 
-                name="text_content" 
-                class="text-input" 
-                placeholder="Type or paste your text here for handwriting practice..."
-                rows="8"
-                required
-            ></textarea>
+            <textarea id="text-content" name="text_content" class="text-input"
+                placeholder="Type or paste your text here for handwriting practice..." rows="8" required></textarea>
         </div>
 
         <!-- Font and Formatting Controls -->
@@ -37,30 +31,26 @@
                         <option value="Trebuchet MS">Trebuchet MS</option>
                         <option value="Palatino">Palatino</option>
                     </select>
+                    <!-- Font Preview -->
+                    <div id="font-preview" class="font-preview">
+                        <div id="font-preview-loading" class="font-preview-loading" style="display: none;">
+                            Loading preview...
+                        </div>
+                        <img id="font-preview-image" class="font-preview-image" alt="Font preview"
+                            style="display: none;">
+                        <span id="font-preview-fallback" class="font-preview-fallback">Select a font to see
+                            preview</span>
+                    </div>
                 </div>
 
                 <!-- Font Size Control -->
                 <div class="form-group">
                     <label for="font-size" class="form-label">Font Size: <span id="font-size-value">16</span>px</label>
                     <div class="font-size-controls">
-                        <input 
-                            type="range" 
-                            id="font-size" 
-                            name="font_size" 
-                            min="8" 
-                            max="72" 
-                            value="16" 
-                            class="form-range"
-                        >
-                        <input 
-                            type="number" 
-                            id="font-size-input" 
-                            name="font_size_input" 
-                            min="8" 
-                            max="72" 
-                            value="16" 
-                            class="form-input-number"
-                        >
+                        <input type="range" id="font-size" name="font_size" min="8" max="72" value="16"
+                            class="form-range">
+                        <input type="number" id="font-size-input" name="font_size_input" min="8" max="72" value="16"
+                            class="form-input-number">
                     </div>
                 </div>
 
@@ -128,17 +118,7 @@
             </div>
         </div>
 
-        <!-- Preview Section Placeholder -->
-        <div class="preview-section">
-            <h3>Preview</h3>
-            <div id="preview-container" class="preview-container">
-                <div class="preview-placeholder">
-                    Enter text above to see preview
-                </div>
-            </div>
-        </div>
-
-        <!-- Action Buttons Placeholder -->
+        <!-- Action Buttons -->
         <div class="actions-section">
             <button type="button" id="generate-pdf" class="btn btn-primary" disabled>
                 Generate PDF

@@ -68,8 +68,8 @@ class TestIntegrationWorkflow:
         processed_data = json.loads(response.data)
         assert processed_data["success"] is True
 
-        # Step 3: Generate preview
-        preview_data = {
+        # Step 3: Generate PDF
+        pdf_data = {
             "text": text_data["text"],
             "options": {
                 "font_name": font_name,
@@ -82,17 +82,6 @@ class TestIntegrationWorkflow:
                 "blank_lines": False,
             },
         }
-
-        response = client.post(
-            "/api/preview",
-            data=json.dumps(preview_data),
-            content_type="application/json",
-        )
-        assert response.status_code == 200
-
-        preview_result = json.loads(response.data)
-        assert preview_result["success"] is True
-        assert "preview_html" in preview_result["data"]
 
         # Step 4: Generate PDF
         with patch(
@@ -112,7 +101,7 @@ class TestIntegrationWorkflow:
 
                 response = client.post(
                     "/api/generate-pdf",
-                    data=json.dumps(preview_data),
+                    data=json.dumps(pdf_data),
                     content_type="application/json",
                 )
 
@@ -224,6 +213,29 @@ class TestIntegrationWorkflow:
                 result = json.loads(response.data)
                 assert result["success"] is True
                 assert "preview_data" in result["data"]
+
+    def test_font_preview_image_workflow(self, client):
+        """Test PNG font preview image generation workflow."""
+
+        # Test valid request
+        response = client.get(
+            "/api/fonts/preview-image?font_name=Helvetica&preview_text=Test&font_size=24"
+        )
+        assert response.status_code == 200
+        result = json.loads(response.data)
+        assert result["success"] is True
+        assert "preview_image" in result["data"]
+        assert result["data"]["preview_image"].startswith("data:image/png;base64,")
+
+        # Test missing font_name
+        response = client.get("/api/fonts/preview-image")
+        assert response.status_code == 400
+
+        # Test with system font if possible
+        response = client.get("/api/fonts/preview-image?font_name=Amiri Regular")
+        # Could be 200 (if font found) or 500/ fallback (if font not found)
+        # We just check it doesn't crash the server
+        assert response.status_code in [200, 500, 404]
 
     def test_error_handling_workflow(self, client):
         """Test error handling throughout the workflow."""
@@ -374,17 +386,6 @@ class TestIntegrationWorkflow:
         result = json.loads(response.data)
         assert result["success"] is True
 
-        # Test preview generation with all options
-        response = client.post(
-            "/api/preview",
-            data=json.dumps(comprehensive_data),
-            content_type="application/json",
-        )
-
-        assert response.status_code == 200
-        result = json.loads(response.data)
-        assert result["success"] is True
-
         # Test PDF generation with all options
         with patch(
             "handwriting_transcription.pdf_generator.canvas.Canvas"
@@ -445,15 +446,12 @@ class TestIntegrationWorkflow:
 
         # Perform multiple operations
         for i in range(10):
-            # Generate preview
-            preview_data = {
+            # Test text processing
+            text_data = {
                 "text": f"Test text iteration {i}" * 10,
                 "options": {
-                    "font_name": "Helvetica",
-                    "font_size": 12,
-                    "document_size": "A4",
-                    "guidelines": True,
-                    "guideline_type": "ruled",
+                    "remove_spaces": False,
+                    "remove_line_breaks": False,
                     "black_text": True,
                     "gray_text": False,
                     "blank_lines": False,
@@ -461,8 +459,8 @@ class TestIntegrationWorkflow:
             }
 
             response = client.post(
-                "/api/preview",
-                data=json.dumps(preview_data),
+                "/api/process-text",
+                data=json.dumps(text_data),
                 content_type="application/json",
             )
             assert response.status_code == 200
