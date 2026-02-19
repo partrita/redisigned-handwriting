@@ -16,114 +16,109 @@
         <!-- Font and Formatting Controls -->
         <div class="controls-section">
             <div class="control-group">
-                <!-- Font Selection -->
-                <div class="form-group">
-                    <label for="font-select" class="form-label">Font:</label>
+                <label for="font-select" class="form-label">Font:</label>
+                <div class="font-select-container">
                     <select id="font-select" name="font_name" class="form-select">
                         <option value="Arial">Arial</option>
-                        <option value="Times New Roman">Times New Roman</option>
                         <option value="Helvetica">Helvetica</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Verdana">Verdana</option>
-                        <option value="Courier New">Courier New</option>
-                        <option value="Comic Sans MS">Comic Sans MS</option>
-                        <option value="Impact">Impact</option>
-                        <option value="Trebuchet MS">Trebuchet MS</option>
-                        <option value="Palatino">Palatino</option>
+                        <!-- Options will be populated by JS -->
                     </select>
-                    <!-- Font Preview -->
-                    <div id="font-preview" class="font-preview">
-                        <div id="font-preview-loading" class="font-preview-loading" style="display: none;">
-                            Loading preview...
-                        </div>
-                        <img id="font-preview-image" class="font-preview-image" alt="Font preview"
-                            style="display: none;">
-                        <span id="font-preview-fallback" class="font-preview-fallback">Select a font to see
-                            preview</span>
-                    </div>
-                </div>
-
-                <!-- Font Size Control -->
-                <div class="form-group">
-                    <label for="font-size" class="form-label">Font Size: <span id="font-size-value">16</span>px</label>
-                    <div class="font-size-controls">
-                        <input type="range" id="font-size" name="font_size" min="8" max="72" value="16"
-                            class="form-range">
-                        <input type="number" id="font-size-input" name="font_size_input" min="8" max="72" value="16"
-                            class="form-input-number">
-                    </div>
-                </div>
-
-                <!-- Document Size Selection -->
-                <div class="form-group">
-                    <label for="document-size" class="form-label">Document Size:</label>
-                    <select id="document-size" name="document_size" class="form-select">
-                        <option value="A4" selected>A4 (210 × 297 mm)</option>
-                        <option value="Letter">Letter (8.5 × 11 in)</option>
-                        <option value="Legal">Legal (8.5 × 14 in)</option>
-                        <option value="A3">A3 (297 × 420 mm)</option>
-                        <option value="A5">A5 (148 × 210 mm)</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Guideline Options -->
-            <div class="control-group">
-                <div class="checkbox-group">
-                    <div class="form-checkbox">
-                        <input type="checkbox" id="ruled-lines" name="ruled_lines" class="checkbox-input">
-                        <label for="ruled-lines" class="checkbox-label">Ruled Lines</label>
-                    </div>
-                    <div class="form-checkbox">
-                        <input type="checkbox" id="dotted-lines" name="dotted_lines" class="checkbox-input">
-                        <label for="dotted-lines" class="checkbox-label">Dotted Lines</label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Text Color Options -->
-            <div class="control-group">
-                <div class="checkbox-group">
-                    <div class="form-checkbox">
-                        <input type="checkbox" id="black-text" name="black_text" class="checkbox-input" checked>
-                        <label for="black-text" class="checkbox-label">Black Text</label>
-                    </div>
-                    <div class="form-checkbox">
-                        <input type="checkbox" id="gray-text" name="gray_text" class="checkbox-input">
-                        <label for="gray-text" class="checkbox-label">Gray Text</label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Formatting Options -->
-            <div class="control-group">
-                <div class="checkbox-group">
-                    <div class="form-checkbox">
-                        <input type="checkbox" id="blank-lines" name="blank_lines" class="checkbox-input">
-                        <label for="blank-lines" class="checkbox-label">Add Blank Lines</label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Text Processing -->
-            <div class="control-group">
-                <div class="button-group">
-                    <button type="button" id="remove-spaces" class="btn btn-secondary">
-                        Remove Spaces
+                    <button type="button" id="upload-font-btn" class="btn-secondary small-btn">
+                        Upload Font
                     </button>
-                    <button type="button" id="remove-line-breaks" class="btn btn-secondary">
-                        Remove Line Breaks
-                    </button>
+                    <input type="file" id="font-upload-input" accept=".ttf,.otf" style="display: none;">
+                </div>
+                <!-- Font Preview -->
+                <div id="font-preview" class="font-preview">
+                    <div id="font-preview-loading" class="font-preview-loading" style="display: none;">
+                        Loading preview...
+                    </div>
+                    <img id="font-preview-image" class="font-preview-image" alt="Font preview" style="display: none;">
+                    <span id="font-preview-fallback" class="font-preview-fallback">Select a font to see
+                        preview</span>
+                </div>
+            </div>
+
+            <!-- Font Size Control -->
+            <div class="form-group">
+                <label for="font-size" class="form-label">Font Size: <span id="font-size-value">16</span>px</label>
+                <div class="font-size-controls">
+                    <input type="range" id="font-size" name="font_size" min="8" max="72" value="16" class="form-range">
+                    <input type="number" id="font-size-input" name="font_size_input" min="8" max="72" value="16"
+                        class="form-input-number">
+                </div>
+            </div>
+
+            <!-- Document Size Selection -->
+            <div class="form-group">
+                <label for="document-size" class="form-label">Document Size:</label>
+                <select id="document-size" name="document_size" class="form-select">
+                    <option value="A4" selected>A4 (210 × 297 mm)</option>
+                    <option value="Letter">Letter (8.5 × 11 in)</option>
+                    <option value="Legal">Legal (8.5 × 14 in)</option>
+                    <option value="A3">A3 (297 × 420 mm)</option>
+                    <option value="A5">A5 (148 × 210 mm)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Guideline Options -->
+        <div class="control-group">
+            <div class="checkbox-group">
+                <div class="form-checkbox">
+                    <input type="checkbox" id="ruled-lines" name="ruled_lines" class="checkbox-input">
+                    <label for="ruled-lines" class="checkbox-label">Ruled Lines</label>
+                </div>
+                <div class="form-checkbox">
+                    <input type="checkbox" id="dotted-lines" name="dotted_lines" class="checkbox-input">
+                    <label for="dotted-lines" class="checkbox-label">Dotted Lines</label>
                 </div>
             </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="actions-section">
-            <button type="button" id="generate-pdf" class="btn btn-primary" disabled>
-                Generate PDF
-            </button>
+        <!-- Text Color Options -->
+        <div class="control-group">
+            <div class="checkbox-group">
+                <div class="form-checkbox">
+                    <input type="checkbox" id="black-text" name="black_text" class="checkbox-input" checked>
+                    <label for="black-text" class="checkbox-label">Black Text</label>
+                </div>
+                <div class="form-checkbox">
+                    <input type="checkbox" id="gray-text" name="gray_text" class="checkbox-input">
+                    <label for="gray-text" class="checkbox-label">Gray Text</label>
+                </div>
+            </div>
         </div>
-    </form>
+
+        <!-- Formatting Options -->
+        <div class="control-group">
+            <div class="checkbox-group">
+                <div class="form-checkbox">
+                    <input type="checkbox" id="blank-lines" name="blank_lines" class="checkbox-input">
+                    <label for="blank-lines" class="checkbox-label">Add Blank Lines</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Text Processing -->
+        <div class="control-group">
+            <div class="button-group">
+                <button type="button" id="remove-spaces" class="btn btn-secondary">
+                    Remove Spaces
+                </button>
+                <button type="button" id="remove-line-breaks" class="btn btn-secondary">
+                    Remove Line Breaks
+                </button>
+            </div>
+        </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="actions-section">
+    <button type="button" id="generate-pdf" class="btn btn-primary" disabled>
+        Generate PDF
+    </button>
+</div>
+</form>
 </div>
 {% endblock %}

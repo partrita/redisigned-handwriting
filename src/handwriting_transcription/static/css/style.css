@@ -112,6 +112,39 @@ h1 {
     gap: 15px;
 }
 
+
+
+.font-select-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.font-select-container .form-select {
+    flex: 1;
+}
+
+.btn-secondary.small-btn {
+    padding: 0 16px;
+    font-size: 14px;
+    background-color: #f8f9fa;
+    color: #333;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    height: 42px;
+    /* Match form-select height */
+    align-items: center;
+    display: flex;
+}
+
+.btn-secondary.small-btn:hover {
+    background-color: #e2e6ea;
+    border-color: #adb5bd;
+}
+
 .form-range {
     flex: 1;
     height: 6px;

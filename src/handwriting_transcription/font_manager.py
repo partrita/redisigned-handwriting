@@ -449,6 +449,71 @@ class FontManager:
                 "space_width": size * 0.25,
             }
 
+    def register_custom_font(self, font_path: str) -> Optional[FontInfo]:
+        """Register a custom font file and make it available for use."""
+        try:
+            # Extract basic font name from filename
+            filename = os.path.basename(font_path)
+            font_name_base = os.path.splitext(filename)[0]
+            
+            # Clean up the name: replace underscores/hyphens with spaces, title case
+            font_name = font_name_base.replace("-", " ").replace("_", " ").title()
+            
+            # Check if file exists
+            if not os.path.exists(font_path):
+                logger.error(f"Custom font file not found: {font_path}")
+                return None
+                
+            # Register path
+            self._font_paths[font_name] = font_path
+            
+            # Create info object
+            font_info = FontInfo(
+                name=font_name,
+                file_path=font_path,
+                preview_text="The quick brown fox jumps over the lazy dog",
+                supported_sizes=list(range(8, 73)),
+                is_system_font=False
+            )
+            
+            # Store in system fonts dict so it appears in lists
+            self._system_fonts[font_name] = font_info
+            
+            # Attempt to verify by loading (this registers with ReportLab)
+            try:
+                # We need to clear cache for this font if it was loaded before
+                if font_name in self._font_cache:
+                    del self._font_cache[font_name]
+                if font_name in self._preview_cache:
+                    # Clear preview cache for this font
+                    keys_to_remove = [k for k in self._preview_cache.keys() if k.startswith(font_name) or f"img_{font_name}" in k]
+                    for k in keys_to_remove:
+                        del self._preview_cache[k]
+                    
+                loaded_name = self.load_font(font_name)
+                if not loaded_name:
+                    logger.warning(f"Failed to load custom font {font_name} with ReportLab")
+                    # Remove from registry if failed
+                    if font_name in self._system_fonts:
+                        del self._system_fonts[font_name]
+                    if font_name in self._font_paths:
+                        del self._font_paths[font_name]
+                    return None
+            except Exception as e:
+                logger.error(f"Error validating custom font {font_name}: {e}")
+                if font_name in self._system_fonts:
+                    del self._system_fonts[font_name]
+                if font_name in self._font_paths:
+                    del self._font_paths[font_name]
+                return None
+
+            logger.info(f"Successfully registered custom font: {font_name}")
+            return font_info
+
+        except Exception as e:
+            logger.error(f"Error registering custom font {font_path}: {e}")
+            return None
+
     def _create_cache_key(self, *args) -> str:
         """Create a cache key from arguments."""
         key_string = "|".join(str(arg) for arg in args)

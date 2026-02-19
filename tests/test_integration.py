@@ -5,7 +5,7 @@ Integration tests for the complete transcription-game workflow.
 import pytest
 import json
 import os
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, mock_open
 from handwriting_transcription.app import create_app
 
 
@@ -236,6 +236,78 @@ class TestIntegrationWorkflow:
         # Could be 200 (if font found) or 500/ fallback (if font not found)
         # We just check it doesn't crash the server
         assert response.status_code in [200, 500, 404]
+
+    def test_font_upload_workflow(self, client):
+        """Test custom font upload workflow."""
+        from io import BytesIO
+
+        # Test missing file
+        response = client.post("/api/fonts/upload")
+        assert response.status_code == 400
+        assert json.loads(response.data)["error"] == "No file provided"
+
+        # Test invalid extension
+        data = {
+            "font_file": (BytesIO(b"content"), "test.txt")
+        }
+        response = client.post(
+            "/api/fonts/upload", 
+            data=data,
+            content_type="multipart/form-data"
+        )
+        assert response.status_code == 400
+        assert "Invalid file type" in json.loads(response.data)["error"]
+
+        # Test successful upload (mocking internal logic but using real client)
+        # We need to mock secure_filename to control the filename
+        # And FontManager.register_custom_font to avoid actual processing
+        # And file.save to avoid writing to disk
+        
+        with patch("handwriting_transcription.app.secure_filename", return_value="test_font.ttf"):
+            with patch("handwriting_transcription.font_manager.FontManager.register_custom_font") as mock_register:
+                # Mock return of register_custom_font
+                mock_register.return_value = type("FontInfo", (), {
+                    "name": "Test Font",
+                    "file_path": "/path/to/test_font.ttf",
+                    "preview_text": "Abc",
+                    "supported_sizes": [12],
+                    "is_system_font": False
+                })()
+                
+                # We need to mock FileStorage.save or app.static_folder access
+                # But since file.save is called on the object from request.files, and that object is created by client...
+                # It's easier to mock os.makedirs and Werkzeug's FileStorage.save if possible.
+                # Or just let it fail at save and catch it? No we want success.
+                
+                # Mocking file.save globally is hard. 
+                # Let's mock the 'app.route' function... no.
+                
+                # Let's mock os.makedirs and the save method on the file instance?
+                # Actually, we can just mock os.path.join to return /dev/null or similar?
+                # Or use proper mocking of the file object.
+                
+                # Let's try to mock the file saving PART in app.py logic using a slightly different approach.
+                # We can mock the 'request' object's file access? No that caused recursion.
+                
+                # Best approach for integration test without IO:
+                # Mock os.makedirs to do nothing
+                # Mock FileStorage.save (we can import it and patch it)
+                from werkzeug.datastructures import FileStorage
+                with patch.object(FileStorage, "save") as mock_save:
+                    with patch("os.makedirs"):
+                        data = {
+                            "font_file": (BytesIO(b"valid font content"), "test_font.ttf")
+                        }
+                        response = client.post(
+                            "/api/fonts/upload", 
+                            data=data,
+                            content_type="multipart/form-data"
+                        )
+                        assert response.status_code == 200
+                        result = json.loads(response.data)
+                        assert result["success"] is True
+                        assert result["data"]["font"]["name"] == "Test Font"
+
 
     def test_error_handling_workflow(self, client):
         """Test error handling throughout the workflow."""

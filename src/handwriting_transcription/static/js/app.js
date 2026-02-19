@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function initializeFormControls() {
+    // Configure font upload
+    setupFontUpload();
+
     // Get form elements
     const textContent = document.getElementById('text-content');
     const fontSizeRange = document.getElementById('font-size');
@@ -710,6 +713,89 @@ async function loadFontPreview(fontName) {
         previewFallback.textContent = `Preview: ${fontName}`;
         previewFallback.style.display = 'block';
     }
+}
+
+// Font upload functionality
+function setupFontUpload() {
+    const uploadBtn = document.getElementById('upload-font-btn');
+    const fileInput = document.getElementById('font-upload-input');
+    const fontSelect = document.getElementById('font-select');
+
+    if (!uploadBtn || !fileInput) return;
+
+    uploadBtn.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', async function () {
+        if (this.files.length === 0) return;
+
+        const file = this.files[0];
+
+        // Basic validation
+        const validExts = ['.ttf', '.otf'];
+        const fileName = file.name.toLowerCase();
+
+        if (!validExts.some(ext => fileName.endsWith(ext))) {
+            showNotification('Invalid file type. Please upload .ttf or .otf file.', 'error');
+            this.value = '';
+            return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+            showNotification('File is too large. Max size is 10MB.', 'error');
+            this.value = '';
+            return;
+        }
+
+        // Upload
+        const formData = new FormData();
+        formData.append('font_file', file);
+
+        // Show loading state on button
+        const originalText = uploadBtn.textContent;
+        uploadBtn.textContent = 'Uploading...';
+        uploadBtn.disabled = true;
+
+        try {
+            const response = await fetch('/api/fonts/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Upload failed');
+            }
+
+            showNotification(`Font "${result.data.font.display_name}" uploaded successfully!`, 'success');
+
+            // Add custom font to select and select it
+            // Check if option already exists
+            let option = fontSelect.querySelector(`option[value="${result.data.font.name}"]`);
+            if (!option) {
+                option = document.createElement('option');
+                option.value = result.data.font.name;
+                option.textContent = result.data.font.display_name + (result.data.font.is_custom ? " (Custom)" : "");
+                fontSelect.appendChild(option);
+            }
+
+            // Select the new font
+            fontSelect.value = result.data.font.name;
+
+            // Trigger change event to load preview
+            fontSelect.dispatchEvent(new Event('change'));
+
+        } catch (error) {
+            console.error('Font upload error:', error);
+            showNotification(error.message, 'error');
+        } finally {
+            uploadBtn.textContent = originalText.trim(); // Trim in case of extra spaces
+            uploadBtn.disabled = false;
+            fileInput.value = '';
+        }
+    });
 }
 
 // Get form data as object

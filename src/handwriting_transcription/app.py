@@ -3,6 +3,7 @@ Main Flask application module for the transcription game.
 """
 
 from flask import Flask, render_template, request, jsonify
+from werkzeug.utils import secure_filename
 import os
 import logging
 import time
@@ -377,6 +378,67 @@ def create_app(config_name=None):
                 "success": False,
                 "error": f"Preview generation failed: {str(e)}"
             }), 500
+
+    @app.route("/api/fonts/upload", methods=["POST"])
+    def upload_font():
+        """Handle custom font upload."""
+        if "font_file" not in request.files:
+            return jsonify({"success": False, "error": "No file provided"}), 400
+
+        file = request.files["font_file"]
+
+        if file.filename == "":
+            return jsonify({"success": False, "error": "No file selected"}), 400
+
+        filename = secure_filename(file.filename)
+        file_ext = os.path.splitext(filename)[1].lower()
+
+        if file_ext not in InputValidator.VALID_FONT_EXTENSIONS:
+            return jsonify({
+                "success": False, 
+                "error": f"Invalid file type. Allowed: {', '.join(InputValidator.VALID_FONT_EXTENSIONS)}"
+            }), 400
+            
+        if len(file.read()) > InputValidator.MAX_FONT_FILE_SIZE:
+             return jsonify({"success": False, "error": "File too large (max 10MB)"}), 400
+        file.seek(0) # Reset pointer
+
+        try:
+            # Save file
+            upload_folder = os.path.join(app.root_path, "static", "fonts", "custom")
+            os.makedirs(upload_folder, exist_ok=True)
+
+            file_path = os.path.join(upload_folder, filename)
+            file.save(file_path)
+
+            # Register font
+            font_info = font_manager.register_custom_font(file_path)
+
+            if not font_info:
+                # Clean up if registration fails
+                try:
+                    os.remove(file_path)
+                except Exception:
+                    pass
+                return jsonify({
+                    "success": False, 
+                    "error": "Failed to load font file. It may be corrupted or unsupported."
+                }), 400
+
+            return jsonify({
+                "success": True,
+                "data": {
+                    "font": {
+                        "name": font_info.name,
+                        "display_name": font_info.name,
+                        "is_custom": True
+                    }
+                }
+            })
+            
+        except Exception as e:
+            logger.error(f"Font upload failed: {e}")
+            return jsonify({"success": False, "error": str(e)}), 500
 
     @app.route("/api/fonts/metrics", methods=["POST"])
     @with_font_error_handling

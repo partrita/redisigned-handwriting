@@ -64,6 +64,8 @@ class InputValidator:
     VALID_DOCUMENT_SIZES = ["A4", "Letter", "Legal"]
     VALID_GUIDELINE_TYPES = ["none", "ruled", "dotted"]
     VALID_COLORS = ["black", "gray"]
+    VALID_FONT_EXTENSIONS = {".ttf", ".otf"}
+    MAX_FONT_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
     # Allowed characters pattern (printable ASCII + common Unicode)
     SAFE_TEXT_PATTERN = re.compile(
