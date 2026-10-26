@@ -7,11 +7,12 @@ requires-python = ">=3.11"
 dependencies = [
     "flask>=2.3.3",
     "reportlab>=4.0.4",
-    "pillow>=12.3.0",
+    "pillow>=13.0.0",
     "python-dotenv>=1.0.0",
     "fonttools>=4.42.1",
     "requests>=2.32.5",
     "gunicorn>=21.2.0",
+    "werkzeug>=3.1.9",
 ]
 
 [project.optional-dependencies]
